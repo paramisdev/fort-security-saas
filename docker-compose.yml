@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fort-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fort}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fort}
+      POSTGRES_DB: ${POSTGRES_DB:-fort}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fort} -d ${POSTGRES_DB:-fort}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fort-app
+    environment:
+      APP_NAME: ${APP_NAME:-Fort Security SaaS}
+      DEBUG: ${DEBUG:-false}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fort}:${POSTGRES_PASSWORD:-fort}@postgres:5432/${POSTGRES_DB:-fort}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-14}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@fort.local}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-change-me-too}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
