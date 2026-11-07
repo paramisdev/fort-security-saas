@@ -1,5 +1,3 @@
-"""Эндпоинты оборудования."""
-
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -37,7 +35,6 @@ async def list_devices(
     type: DeviceType | None = Query(default=None),
     status: DeviceStatus | None = Query(default=None),
 ) -> list:
-    """Список устройств тенанта с фильтрами (TenantAdmin и Client)."""
     return await device_service.list_devices(
         session, tenant_id, object_id=object_id, device_type=type, status=status
     )
@@ -49,7 +46,6 @@ async def create_device(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> Device:
-    """Регистрация устройства (TenantAdmin; проверяется лимит тарифа)."""
     try:
         return await device_service.create_device(session, tenant_id, payload)
     except (LimitExceededError, NoActiveSubscriptionError, ConflictError, NotFoundError) as exc:
@@ -62,7 +58,6 @@ async def get_device(
     tenant_id: uuid.UUID = Depends(tenant_read),
     session: AsyncSession = Depends(get_session),
 ) -> Device:
-    """Устройство по id (только своего тенанта; чужой id вернёт 404)."""
     try:
         return await device_service.get_device(session, device_id, tenant_id)
     except NotFoundError as exc:
@@ -76,7 +71,6 @@ async def update_device(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> Device:
-    """Частичное обновление устройства (TenantAdmin)."""
     try:
         return await device_service.update_device(session, device_id, tenant_id, payload)
     except (NotFoundError, ConflictError) as exc:
@@ -90,7 +84,6 @@ async def update_device_status(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> Device:
-    """Heartbeat: смена статуса online/offline (TenantAdmin)."""
     try:
         return await device_service.update_device_status(session, device_id, tenant_id, payload)
     except NotFoundError as exc:
@@ -103,7 +96,6 @@ async def delete_device(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> None:
-    """Удаление устройства (TenantAdmin)."""
     try:
         await device_service.delete_device(session, device_id, tenant_id)
     except NotFoundError as exc:

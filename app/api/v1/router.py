@@ -1,5 +1,3 @@
-"""Сборка роутера API v1."""
-
 from fastapi import APIRouter
 
 from app.api.v1 import auth, devices, objects, subscriptions, tariffs, users

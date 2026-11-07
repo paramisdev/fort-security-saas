@@ -1,5 +1,3 @@
-"""Репозиторий оборудования."""
-
 import uuid
 
 from sqlalchemy import func, select
@@ -10,8 +8,6 @@ from app.repositories.base import BaseRepository
 
 
 class DeviceRepository(BaseRepository[Device]):
-    """Доступ к данным устройств (всегда с фильтром по tenant_id)."""
-
     model = Device
 
     async def list_by_tenant(
@@ -22,7 +18,6 @@ class DeviceRepository(BaseRepository[Device]):
         device_type: DeviceType | None = None,
         status: DeviceStatus | None = None,
     ) -> list[Device]:
-        """Список устройств тенанта с опциональными фильтрами."""
         query = select(Device).where(Device.tenant_id == tenant_id)
         if object_id is not None:
             query = query.where(Device.object_id == object_id)
@@ -34,7 +29,6 @@ class DeviceRepository(BaseRepository[Device]):
         return list(result.scalars().all())
 
     async def get_in_tenant(self, device_id: uuid.UUID, tenant_id: uuid.UUID) -> Device | None:
-        """Возвращает устройство только если оно принадлежит тенанту."""
         result = await self.session.execute(
             select(Device).where(Device.id == device_id, Device.tenant_id == tenant_id)
         )
@@ -43,7 +37,6 @@ class DeviceRepository(BaseRepository[Device]):
     async def get_by_serial_in_tenant(
         self, tenant_id: uuid.UUID, serial_number: str
     ) -> Device | None:
-        """Устройство с данным серийным номером в тенанте (проверка уникальности)."""
         result = await self.session.execute(
             select(Device).where(
                 Device.tenant_id == tenant_id, Device.serial_number == serial_number
@@ -52,7 +45,6 @@ class DeviceRepository(BaseRepository[Device]):
         return result.scalar_one_or_none()
 
     async def count_by_tenant(self, tenant_id: uuid.UUID) -> int:
-        """Количество устройств тенанта (для лимита тарифа)."""
         result = await self.session.execute(
             select(func.count()).select_from(Device).where(Device.tenant_id == tenant_id)
         )

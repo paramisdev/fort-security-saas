@@ -1,5 +1,3 @@
-"""Сервисы объектов и устройств: проверка лимитов активного тарифа."""
-
 import uuid
 from datetime import UTC, datetime
 
@@ -23,11 +21,6 @@ from app.services.errors import (
 
 
 async def get_active_tariff(session: AsyncSession, tenant_id: uuid.UUID) -> Tariff:
-    """Возвращает тариф активной подписки тенанта.
-
-    Raises:
-        NoActiveSubscriptionError: активной подписки нет.
-    """
     subscription = await SubscriptionRepository(session).get_active(tenant_id)
     if subscription is None:
         raise NoActiveSubscriptionError("No active subscription: choose a tariff first")
@@ -36,23 +29,17 @@ async def get_active_tariff(session: AsyncSession, tenant_id: uuid.UUID) -> Tari
 
 
 def _format_limit_error(limit: int, entity: str, tariff_name: str) -> str:
-    """Формирует сообщение о лимите с правильным склонением."""
     noun = entity if limit == 1 else f"{entity}s"
     return f"Tariff limit reached: max {limit} {noun} for tariff '{tariff_name}'"
 
 
-# --- Объекты ---
-
-
 async def list_objects(session: AsyncSession, tenant_id: uuid.UUID) -> list[SecurityObject]:
-    """Список объектов тенанта."""
     return await SecurityObjectRepository(session).list_by_tenant(tenant_id)
 
 
 async def get_object(
     session: AsyncSession, object_id: uuid.UUID, tenant_id: uuid.UUID
 ) -> SecurityObject:
-    """Объект тенанта по id."""
     security_object = await SecurityObjectRepository(session).get_in_tenant(object_id, tenant_id)
     if security_object is None:
         raise NotFoundError("Object not found")
@@ -62,7 +49,6 @@ async def get_object(
 async def create_object(
     session: AsyncSession, tenant_id: uuid.UUID, payload: ObjectCreate
 ) -> SecurityObject:
-    """Создаёт объект, проверяя лимит max_objects тарифа."""
     tariff = await get_active_tariff(session, tenant_id)
     repo = SecurityObjectRepository(session)
     if await repo.count_by_tenant(tenant_id) >= tariff.max_objects:
@@ -81,7 +67,6 @@ async def create_object(
 async def update_object(
     session: AsyncSession, object_id: uuid.UUID, tenant_id: uuid.UUID, payload: ObjectUpdate
 ) -> SecurityObject:
-    """Частично обновляет объект тенанта."""
     security_object = await get_object(session, object_id, tenant_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(security_object, field, value)
@@ -96,9 +81,6 @@ async def delete_object(session: AsyncSession, object_id: uuid.UUID, tenant_id: 
     await session.commit()
 
 
-# --- Устройства ---
-
-
 async def list_devices(
     session: AsyncSession,
     tenant_id: uuid.UUID,
@@ -107,14 +89,12 @@ async def list_devices(
     device_type: DeviceType | None = None,
     status: DeviceStatus | None = None,
 ) -> list[Device]:
-    """Список устройств тенанта с фильтрами."""
     return await DeviceRepository(session).list_by_tenant(
         tenant_id, object_id=object_id, device_type=device_type, status=status
     )
 
 
 async def get_device(session: AsyncSession, device_id: uuid.UUID, tenant_id: uuid.UUID) -> Device:
-    """Устройство тенанта по id."""
     device = await DeviceRepository(session).get_in_tenant(device_id, tenant_id)
     if device is None:
         raise NotFoundError("Device not found")
@@ -124,7 +104,6 @@ async def get_device(session: AsyncSession, device_id: uuid.UUID, tenant_id: uui
 async def create_device(
     session: AsyncSession, tenant_id: uuid.UUID, payload: DeviceCreate
 ) -> Device:
-    """Регистрирует устройство, проверяя лимит max_devices и данные."""
     tariff = await get_active_tariff(session, tenant_id)
     repo = DeviceRepository(session)
 
@@ -153,7 +132,6 @@ async def create_device(
 async def update_device(
     session: AsyncSession, device_id: uuid.UUID, tenant_id: uuid.UUID, payload: DeviceUpdate
 ) -> Device:
-    """Частично обновляет устройство (переименование, перепривязка к объекту)."""
     device = await get_device(session, device_id, tenant_id)
     data = payload.model_dump(exclude_unset=True)
     if "object_id" in data and data["object_id"] is not None:
@@ -170,7 +148,6 @@ async def update_device_status(
     tenant_id: uuid.UUID,
     payload: DeviceStatusUpdate,
 ) -> Device:
-    """Heartbeat: меняет статус устройства и фиксирует время последнего контакта."""
     device = await get_device(session, device_id, tenant_id)
     device.status = payload.status
     device.last_seen_at = datetime.now(UTC)
@@ -179,7 +156,6 @@ async def update_device_status(
 
 
 async def delete_device(session: AsyncSession, device_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
-    """Удаляет устройство тенанта."""
     device = await get_device(session, device_id, tenant_id)
     await session.delete(device)
     await session.commit()

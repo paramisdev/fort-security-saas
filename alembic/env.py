@@ -1,5 +1,3 @@
-"""Конфигурация окружения Alembic (async-режим)."""
-
 import asyncio
 from logging.config import fileConfig
 
@@ -23,7 +21,6 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Запуск миграций в offline-режиме (без подключения к БД, только SQL)."""
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -44,7 +41,6 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """Запуск миграций в online-режиме через async-движок."""
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -58,7 +54,6 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    """Точка входа online-режима."""
     asyncio.run(run_async_migrations())
 
 

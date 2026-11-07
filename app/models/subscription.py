@@ -1,5 +1,3 @@
-"""Модель подписки тенанта на тариф."""
-
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -16,8 +14,6 @@ if TYPE_CHECKING:
 
 
 class Subscription(Base, UUIDPkMixin, TimestampMixin):
-    """Подписка. Не более одной активной на тенанта (частичный unique index)."""
-
     __tablename__ = "subscriptions"
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(

@@ -1,5 +1,3 @@
-"""Модель платежа (заглушка оплаты)."""
-
 import uuid
 from typing import TYPE_CHECKING
 
@@ -14,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class Payment(Base, UUIDPkMixin, TimestampMixin):
-    """Платёж по подписке. В MVP создаётся заглушкой со статусом succeeded."""
-
     __tablename__ = "payments"
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(

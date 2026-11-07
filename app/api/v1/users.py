@@ -1,5 +1,3 @@
-"""Эндпоинты пользователей."""
-
 from fastapi import APIRouter, Depends
 
 from app.api.deps import get_current_user
@@ -11,5 +9,4 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me", response_model=UserRead)
 async def get_me(user: User = Depends(get_current_user)) -> User:
-    """Профиль текущего пользователя."""
     return user

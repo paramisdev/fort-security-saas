@@ -1,5 +1,3 @@
-"""Модель пользователя."""
-
 import uuid
 from typing import TYPE_CHECKING
 
@@ -14,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class User(Base, UUIDPkMixin, TimestampMixin):
-    """Пользователь платформы. У SuperAdmin tenant_id отсутствует."""
-
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)

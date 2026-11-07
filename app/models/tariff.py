@@ -1,5 +1,3 @@
-"""Модель тарифа (глобальный каталог)."""
-
 from typing import Any
 
 from sqlalchemy import JSON, Boolean, Integer, Numeric, String
@@ -13,8 +11,6 @@ JsonType = JSON().with_variant(JSONB(), "postgresql")
 
 
 class Tariff(Base, UUIDPkMixin, TimestampMixin):
-    """Тариф: Старт, Комфорт, Премиум, Премиум+."""
-
     __tablename__ = "tariffs"
 
     code: Mapped[str] = mapped_column(String(50), unique=True, index=True)

@@ -1,5 +1,3 @@
-"""Импорт всех моделей для регистрации метаданных (нужно Alembic autogenerate)."""
-
 from app.models.base import Base
 from app.models.device import Device
 from app.models.enums import (

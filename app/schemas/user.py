@@ -1,5 +1,3 @@
-"""Pydantic-схемы пользователей."""
-
 import uuid
 from datetime import datetime
 
@@ -9,8 +7,6 @@ from app.models.enums import UserRole
 
 
 class UserCreate(BaseModel):
-    """Данные для создания пользователя внутри тенанта."""
-
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     full_name: str = Field(min_length=1, max_length=255)
@@ -18,16 +14,12 @@ class UserCreate(BaseModel):
 
 
 class TenantAdminCreate(BaseModel):
-    """Данные первого пользователя при регистрации тенанта."""
-
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     full_name: str = Field(min_length=1, max_length=255)
 
 
 class UserRead(BaseModel):
-    """Пользователь в ответах API."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID

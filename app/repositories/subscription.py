@@ -1,5 +1,3 @@
-"""Репозитории подписок и платежей."""
-
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -14,12 +12,9 @@ SUBSCRIPTION_PERIOD_DAYS = 30
 
 
 class SubscriptionRepository(BaseRepository[Subscription]):
-    """Доступ к данным подписок."""
-
     model = Subscription
 
     async def get_active(self, tenant_id: uuid.UUID) -> Subscription | None:
-        """Возвращает активную подписку тенанта (благодаря unique-индексу их <= 1)."""
         result = await self.session.execute(
             select(Subscription).where(
                 Subscription.tenant_id == tenant_id,
@@ -29,7 +24,6 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         return result.scalar_one_or_none()
 
     async def create_active(self, tenant_id: uuid.UUID, tariff_id: uuid.UUID) -> Subscription:
-        """Создаёт новую активную подписку на период 30 дней."""
         subscription = Subscription(
             tenant_id=tenant_id,
             tariff_id=tariff_id,
@@ -43,8 +37,6 @@ class SubscriptionRepository(BaseRepository[Subscription]):
 
 
 class PaymentRepository(BaseRepository[Payment]):
-    """Доступ к данным платежей."""
-
     model = Payment
 
     async def create(
@@ -56,7 +48,6 @@ class PaymentRepository(BaseRepository[Payment]):
         amount: float,
         status: PaymentStatus,
     ) -> Payment:
-        """Создаёт запись о платеже."""
         payment = Payment(
             tenant_id=tenant_id,
             subscription_id=subscription_id,
@@ -69,7 +60,6 @@ class PaymentRepository(BaseRepository[Payment]):
         return payment
 
     async def list_by_tenant(self, tenant_id: uuid.UUID) -> list[Payment]:
-        """Все платежи тенанта."""
         result = await self.session.execute(
             select(Payment).where(Payment.tenant_id == tenant_id).order_by(Payment.created_at)
         )

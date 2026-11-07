@@ -1,5 +1,3 @@
-"""FastAPI-зависимости: БД, текущий пользователь, RBAC."""
-
 import uuid
 from collections.abc import Awaitable, Callable
 
@@ -52,11 +50,6 @@ async def get_current_user(
 
 
 def require_roles(*allowed_roles: UserRole) -> Callable[[User], Awaitable[User]]:
-    """Фабрика зависимости: разрешает доступ только указанным ролям.
-
-    Пример: Depends(require_roles(UserRole.SUPERADMIN, UserRole.TENANT_ADMIN)).
-    """
-
     async def check_role(user: User = Depends(get_current_user)) -> User:
         if user.role not in allowed_roles:
             raise HTTPException(

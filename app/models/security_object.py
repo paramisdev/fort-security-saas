@@ -1,5 +1,3 @@
-"""Модель охраняемого объекта (квартира, офис и т.д.)."""
-
 import uuid
 from typing import TYPE_CHECKING
 
@@ -14,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class SecurityObject(Base, UUIDPkMixin, TimestampMixin):
-    """Объект охраны, принадлежащий тенанту."""
-
     __tablename__ = "objects"
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(

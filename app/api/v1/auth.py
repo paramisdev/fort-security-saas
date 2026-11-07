@@ -1,5 +1,3 @@
-"""Эндпоинты аутентификации: регистрация, вход, refresh."""
-
 import uuid
 
 import jwt
@@ -27,7 +25,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register_tenant(
     payload: TenantRegisterRequest, session: AsyncSession = Depends(get_session)
 ) -> User:
-    """Регистрация новой компании: создаёт tenant и его администратора."""
     try:
         _tenant, admin = await auth_service.register_tenant_with_admin(
             session,
@@ -47,7 +44,6 @@ async def register_tenant(
 async def login(
     payload: LoginRequest, session: AsyncSession = Depends(get_session)
 ) -> TokenPairResponse:
-    """Выдаёт пару access/refresh токенов по email и паролю."""
     try:
         user = await auth_service.authenticate(
             session, email=payload.email, password=payload.password
@@ -66,7 +62,6 @@ async def login(
 async def refresh(
     payload: RefreshRequest, session: AsyncSession = Depends(get_session)
 ) -> AccessTokenResponse:
-    """Выдаёт новый access-токен по валидному refresh-токену."""
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid refresh token",

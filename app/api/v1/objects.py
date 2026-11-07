@@ -1,5 +1,3 @@
-"""Эндпоинты охраняемых объектов."""
-
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -24,7 +22,6 @@ async def list_objects(
     tenant_id: uuid.UUID = Depends(tenant_read),
     session: AsyncSession = Depends(get_session),
 ) -> list:
-    """Список объектов тенанта (TenantAdmin и Client)."""
     return await object_service.list_objects(session, tenant_id)
 
 
@@ -34,7 +31,6 @@ async def create_object(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> SecurityObject:
-    """Создание объекта (TenantAdmin; проверяется лимит тарифа)."""
     try:
         return await object_service.create_object(session, tenant_id, payload)
     except (LimitExceededError, NoActiveSubscriptionError) as exc:
@@ -47,7 +43,6 @@ async def get_object(
     tenant_id: uuid.UUID = Depends(tenant_read),
     session: AsyncSession = Depends(get_session),
 ) -> SecurityObject:
-    """Объект по id (только своего тенанта; чужой id вернёт 404)."""
     try:
         return await object_service.get_object(session, object_id, tenant_id)
     except NotFoundError as exc:
@@ -61,7 +56,6 @@ async def update_object(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> SecurityObject:
-    """Частичное обновление объекта (TenantAdmin)."""
     try:
         return await object_service.update_object(session, object_id, tenant_id, payload)
     except NotFoundError as exc:
@@ -74,7 +68,6 @@ async def delete_object(
     tenant_id: uuid.UUID = Depends(tenant_write),
     session: AsyncSession = Depends(get_session),
 ) -> None:
-    """Удаление объекта (TenantAdmin). Привязанные устройства открепляются."""
     try:
         await object_service.delete_object(session, object_id, tenant_id)
     except NotFoundError as exc:

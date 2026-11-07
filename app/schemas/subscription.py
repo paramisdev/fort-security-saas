@@ -1,5 +1,3 @@
-"""Pydantic-схемы подписок."""
-
 import uuid
 from datetime import datetime
 
@@ -10,8 +8,6 @@ from app.schemas.tariff import TariffRead
 
 
 class SubscriptionRead(BaseModel):
-    """Подписка в ответах API (с вложенным тарифом)."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -23,6 +19,4 @@ class SubscriptionRead(BaseModel):
 
 
 class ChangeTariffRequest(BaseModel):
-    """Смена тарифа тенанта (через заглушку оплаты)."""
-
     tariff_code: str = Field(min_length=2, max_length=50)

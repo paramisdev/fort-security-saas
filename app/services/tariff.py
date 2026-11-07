@@ -1,5 +1,3 @@
-"""Сервис тарифов."""
-
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +18,6 @@ async def list_tariffs(session: AsyncSession, *, only_active: bool = True) -> li
 
 
 async def create_tariff(session: AsyncSession, payload: TariffCreate) -> Tariff:
-    """Создаёт новый тариф (SuperAdmin)."""
     repo = TariffRepository(session)
     if await repo.get_by_code(payload.code):
         raise ConflictError(f"Tariff code '{payload.code}' already exists")
@@ -33,7 +30,6 @@ async def create_tariff(session: AsyncSession, payload: TariffCreate) -> Tariff:
 async def update_tariff(
     session: AsyncSession, tariff_id: uuid.UUID, payload: TariffUpdate
 ) -> Tariff:
-    """Частично обновляет тариф (SuperAdmin)."""
     repo = TariffRepository(session)
     tariff = await repo.get_by_id(tariff_id)
     if tariff is None:

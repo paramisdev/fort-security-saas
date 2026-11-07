@@ -1,5 +1,3 @@
-"""Pydantic-схемы тарифов."""
-
 import uuid
 from datetime import datetime
 from typing import Any
@@ -8,8 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TariffBase(BaseModel):
-    """Общие поля тарифа."""
-
     code: str = Field(min_length=2, max_length=50, pattern=r"^[a-z0-9_]+$")
     name: str = Field(min_length=1, max_length=255)
     price_monthly: float = Field(ge=0)
@@ -20,12 +16,10 @@ class TariffBase(BaseModel):
 
 
 class TariffCreate(TariffBase):
-    """Создание тарифа (SuperAdmin)."""
+    pass
 
 
 class TariffUpdate(BaseModel):
-    """Частичное обновление тарифа."""
-
     name: str | None = Field(default=None, min_length=1, max_length=255)
     price_monthly: float | None = Field(default=None, ge=0)
     max_objects: int | None = Field(default=None, ge=1)
@@ -35,8 +29,6 @@ class TariffUpdate(BaseModel):
 
 
 class TariffRead(TariffBase):
-    """Тариф в ответах API."""
-
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID

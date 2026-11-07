@@ -1,5 +1,3 @@
-"""Эндпоинты тарифов: публичный каталог + управление SuperAdmin."""
-
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -22,7 +20,6 @@ superadmin_only = require_roles(UserRole.SUPERADMIN)
 
 @router.get("", response_model=list[TariffRead])
 async def list_tariffs(session: AsyncSession = Depends(get_session)) -> list:
-    """Публичный каталог активных тарифов."""
     return await tariff_service.list_tariffs(session, only_active=True)
 
 
@@ -32,7 +29,6 @@ async def create_tariff(
     _user: User = Depends(superadmin_only),
     session: AsyncSession = Depends(get_session),
 ) -> Tariff:
-    """Создание тарифа (только SuperAdmin)."""
     try:
         return await tariff_service.create_tariff(session, payload)
     except ConflictError as exc:
@@ -46,7 +42,6 @@ async def update_tariff(
     _user: User = Depends(superadmin_only),
     session: AsyncSession = Depends(get_session),
 ) -> Tariff:
-    """Частичное обновление тарифа (только SuperAdmin)."""
     try:
         return await tariff_service.update_tariff(session, tariff_id, payload)
     except NotFoundError as exc:
@@ -55,7 +50,6 @@ async def update_tariff(
 
 @router.get("/{tariff_id}", response_model=TariffRead)
 async def get_tariff(tariff_id: uuid.UUID, session: AsyncSession = Depends(get_session)) -> Tariff:
-    """Получение тарифа по id (публично по id, авторизация не требуется)."""
     tariff = await TariffRepository(session).get_by_id(tariff_id)
     if tariff is None:
         raise HTTPException(status_code=404, detail="Tariff not found")

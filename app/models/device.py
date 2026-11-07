@@ -1,5 +1,3 @@
-"""Модель устройства (датчик, камера, замок)."""
-
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -15,8 +13,6 @@ if TYPE_CHECKING:
 
 
 class Device(Base, UUIDPkMixin, TimestampMixin):
-    """Оборудование тенанта. Серийный номер уникален в рамках тенанта."""
-
     __tablename__ = "devices"
     __table_args__ = (
         UniqueConstraint("tenant_id", "serial_number", name="uq_devices_tenant_serial"),

@@ -1,5 +1,3 @@
-"""Эндпоинты подписок."""
-
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,7 +21,6 @@ async def get_current_subscription(
     tenant_id: uuid.UUID = Depends(tenant_admin),
     session: AsyncSession = Depends(get_session),
 ) -> Subscription:
-    """Текущая активная подписка тенанта."""
     try:
         return await subscription_service.get_current_subscription(session, tenant_id)
     except NotFoundError as exc:
@@ -36,7 +33,6 @@ async def change_tariff(
     tenant_id: uuid.UUID = Depends(tenant_admin),
     session: AsyncSession = Depends(get_session),
 ) -> Subscription:
-    """Смена тарифа: заглушка оплаты, запись платежа, новая активная подписка."""
     try:
         return await subscription_service.change_tariff(
             session, tenant_id, tariff_code=payload.tariff_code

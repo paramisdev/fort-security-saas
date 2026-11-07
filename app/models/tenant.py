@@ -1,5 +1,3 @@
-"""Модель компании-тенанта."""
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, String
@@ -15,8 +13,6 @@ if TYPE_CHECKING:
 
 
 class Tenant(Base, UUIDPkMixin, TimestampMixin):
-    """Компания-арендатор (tenant) — корень изоляции данных."""
-
     __tablename__ = "tenants"
 
     name: Mapped[str] = mapped_column(String(255))

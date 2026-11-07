@@ -1,5 +1,3 @@
-"""Репозиторий пользователей."""
-
 import uuid
 
 from sqlalchemy import select
@@ -9,24 +7,19 @@ from app.repositories.base import BaseRepository
 
 
 class UserRepository(BaseRepository[User]):
-    """Доступ к данным пользователей."""
-
     model = User
 
     async def get_by_email(self, email: str) -> User | None:
-        """Возвращает пользователя по email."""
         result = await self.session.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
     async def get_by_id_in_tenant(self, user_id: uuid.UUID, tenant_id: uuid.UUID) -> User | None:
-        """Возвращает пользователя только если он принадлежит тенанту."""
         result = await self.session.execute(
             select(User).where(User.id == user_id, User.tenant_id == tenant_id)
         )
         return result.scalar_one_or_none()
 
     async def list_by_tenant(self, tenant_id: uuid.UUID) -> list[User]:
-        """Возвращает всех пользователей тенанта."""
         result = await self.session.execute(
             select(User).where(User.tenant_id == tenant_id).order_by(User.created_at)
         )

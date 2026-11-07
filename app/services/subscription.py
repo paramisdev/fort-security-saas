@@ -1,5 +1,3 @@
-"""Сервис подписок с заглушкой платёжного шлюза (PaymentGatewayStub)."""
-
 import uuid
 from typing import Protocol
 
@@ -15,25 +13,17 @@ from app.services.errors import NotFoundError
 class PaymentGateway(Protocol):
     """Интерфейс платёжного шлюза (для будущей интеграции ЮKassa/Stripe)."""
 
-    async def charge(self, *, tenant_id: uuid.UUID, amount: float) -> PaymentStatus:
-        """Списывает сумму и возвращает статус платежа."""
-        ...
+    async def charge(self, *, tenant_id: uuid.UUID, amount: float) -> PaymentStatus: ...
 
 
 class PaymentGatewayStub:
     """Заглушка оплаты: всегда «успешно списывает» указанную сумму."""
 
     async def charge(self, *, tenant_id: uuid.UUID, amount: float) -> PaymentStatus:
-        """Эмулирует успешную оплату."""
         return PaymentStatus.SUCCEEDED
 
 
 async def get_current_subscription(session: AsyncSession, tenant_id: uuid.UUID) -> Subscription:
-    """Активная подписка тенанта.
-
-    Raises:
-        NotFoundError: подписки нет.
-    """
     subscription = await SubscriptionRepository(session).get_active(tenant_id)
     if subscription is None:
         raise NotFoundError("No active subscription")

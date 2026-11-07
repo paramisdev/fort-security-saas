@@ -1,8 +1,3 @@
-"""Идемпотентный сидинг: 4 тарифа + SuperAdmin из настроек.
-
-Запуск: python -m scripts.seed
-"""
-
 import asyncio
 import sys
 
@@ -55,7 +50,6 @@ DEFAULT_TARIFFS = [
 
 
 async def seed() -> None:
-    """Создаёт схему (если пусто), тарифы и SuperAdmin."""
     from app.core.config import get_settings
 
     settings = get_settings()
