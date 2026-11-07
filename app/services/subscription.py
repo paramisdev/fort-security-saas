@@ -1,5 +1,4 @@
 import uuid
-from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,19 +7,6 @@ from app.models.subscription import Subscription
 from app.repositories.subscription import PaymentRepository, SubscriptionRepository
 from app.repositories.tariff import TariffRepository
 from app.services.errors import NotFoundError
-
-
-class PaymentGateway(Protocol):
-    """Интерфейс платёжного шлюза (для будущей интеграции ЮKassa/Stripe)."""
-
-    async def charge(self, *, tenant_id: uuid.UUID, amount: float) -> PaymentStatus: ...
-
-
-class PaymentGatewayStub:
-    """Заглушка оплаты: всегда «успешно списывает» указанную сумму."""
-
-    async def charge(self, *, tenant_id: uuid.UUID, amount: float) -> PaymentStatus:
-        return PaymentStatus.SUCCEEDED
 
 
 async def get_current_subscription(session: AsyncSession, tenant_id: uuid.UUID) -> Subscription:
@@ -36,21 +22,17 @@ async def change_tariff(
     tenant_id: uuid.UUID,
     *,
     tariff_code: str,
-    gateway: PaymentGateway | None = None,
 ) -> Subscription:
-    """Меняет тариф тенанта: «оплата» через шлюз, запись платежа, новая подписка."""
+    """Меняет тариф тенанта: фиксирует оплату, запись платежа и новую подписку."""
     tariff = await TariffRepository(session).get_by_code(tariff_code)
     if tariff is None or not tariff.is_active:
         raise NotFoundError(f"Tariff '{tariff_code}' not found")
-
-    if gateway is None:
-        gateway = PaymentGatewayStub()
 
     subscription_repo = SubscriptionRepository(session)
     payment_repo = PaymentRepository(session)
 
     # Оплата за новый период (в MVP всегда успешна).
-    payment_status = await gateway.charge(tenant_id=tenant_id, amount=float(tariff.price_monthly))
+    payment_status = PaymentStatus.SUCCEEDED
 
     # Деактивируем прежнюю активную подписку (unique-индекс не даст двух активных).
     old_subscription = await subscription_repo.get_active(tenant_id)

@@ -15,8 +15,7 @@ class TariffBase(BaseModel):
     is_active: bool = True
 
 
-class TariffCreate(TariffBase):
-    pass
+class TariffCreate(TariffBase): ...
 
 
 class TariffUpdate(BaseModel):

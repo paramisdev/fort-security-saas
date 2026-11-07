@@ -22,8 +22,7 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-class EmailAlreadyExistsError(AuthError):
-    pass
+class EmailAlreadyExistsError(AuthError): ...
 
 
 class InvalidCredentialsError(AuthError):
@@ -31,8 +30,7 @@ class InvalidCredentialsError(AuthError):
         super().__init__("Incorrect email or password", status_code=401)
 
 
-class InvalidTenantNameError(AuthError):
-    pass
+class InvalidTenantNameError(AuthError): ...
 
 
 class DefaultTariffNotConfiguredError(AuthError):
