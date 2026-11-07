@@ -6,6 +6,8 @@ REGISTER_URL = "/api/v1/auth/register"
 LOGIN_URL = "/api/v1/auth/login"
 REFRESH_URL = "/api/v1/auth/refresh"
 ME_URL = "/api/v1/users/me"
+SUBSCRIPTIONS_URL = "/api/v1/subscriptions"
+OBJECTS_URL = "/api/v1/objects"
 
 
 async def test_register_creates_tenant_admin(client) -> None:  # type: ignore[no-untyped-def]
@@ -16,6 +18,24 @@ async def test_register_creates_tenant_admin(client) -> None:  # type: ignore[no
     assert profile["role"] == "tenant_admin"
     assert profile["tenant_id"] is not None
     assert profile["is_active"] is True
+
+
+async def test_registration_allows_immediate_object_creation(client) -> None:  # type: ignore[no-untyped-def]
+    """После регистрации сразу можно создать объект без вызова /subscriptions/change."""
+    await register_tenant(client, "autosub")
+    tokens = await login(client, "admin-autosub@example.com")
+
+    current = await client.get(f"{SUBSCRIPTIONS_URL}/current", headers=auth_header(tokens))
+    assert current.status_code == 200
+    assert current.json()["tariff"]["code"] == "start"
+
+    response = await client.post(
+        OBJECTS_URL,
+        json={"name": "Auto object", "address": "Test street 1", "type": "apartment"},
+        headers=auth_header(tokens),
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["name"] == "Auto object"
 
 
 async def test_register_duplicate_email_conflict(client) -> None:  # type: ignore[no-untyped-def]

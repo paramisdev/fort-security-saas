@@ -9,8 +9,12 @@ from app.core import security
 from app.models.enums import UserRole
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.repositories.subscription import SubscriptionRepository
+from app.repositories.tariff import TariffRepository
 from app.repositories.tenant import TenantRepository
 from app.repositories.user import UserRepository
+
+DEFAULT_TARIFF_CODE = "start"
 
 
 class AuthError(Exception):
@@ -37,6 +41,13 @@ class InvalidTenantNameError(AuthError):
     """Имя тенанта нельзя преобразовать в уникальный slug."""
 
 
+class DefaultTariffNotConfiguredError(AuthError):
+    """Тариф по умолчанию отсутствует или отключён."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(f"Default tariff '{code}' is not configured", status_code=500)
+
+
 def _slugify(value: str) -> str:
     """Преобразует имя компании в slug (a-z, 0-9, дефис)."""
     slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
@@ -55,6 +66,10 @@ async def register_tenant_with_admin(
 
     if await user_repo.get_by_email(email):
         raise EmailAlreadyExistsError("Email is already registered")
+
+    tariff = await TariffRepository(session).get_by_code(DEFAULT_TARIFF_CODE)
+    if tariff is None or not tariff.is_active:
+        raise DefaultTariffNotConfiguredError(DEFAULT_TARIFF_CODE)
 
     base_slug = _slugify(tenant_name)
     if not base_slug:
@@ -77,6 +92,7 @@ async def register_tenant_with_admin(
         tenant_id=tenant.id,
     )
     await user_repo.add(admin)
+    await SubscriptionRepository(session).create_active(tenant.id, tariff.id)
     await session.commit()
     return tenant, admin
 

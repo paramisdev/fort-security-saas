@@ -25,12 +25,13 @@ def _device_payload(serial: str, object_id: str | None = None) -> dict:
     return payload
 
 
-async def test_create_device_without_subscription_forbidden(client, tenant_admin) -> None:  # type: ignore[no-untyped-def]
-    """Без подписки регистрация устройства запрещена (403)."""
+async def test_create_device_with_auto_subscription(client, tenant_admin) -> None:  # type: ignore[no-untyped-def]
+    """После регистрации подписка 'start' уже активна: устройство создаётся сразу."""
     response = await client.post(
         DEVICES_URL, json=_device_payload("SN-001"), headers=auth_header(tenant_admin["tokens"])
     )
-    assert response.status_code == 403
+    assert response.status_code == 201, response.text
+    assert response.json()["serial_number"] == "SN-001"
 
 
 async def test_create_and_list_devices_with_filters(client, subscribed_admin) -> None:  # type: ignore[no-untyped-def]
@@ -79,7 +80,7 @@ async def test_device_limit_enforced(client, subscribed_admin) -> None:  # type:
         DEVICES_URL, json=_device_payload("SN-EXTRA"), headers=auth_header(tokens)
     )
     assert fourth.status_code == 403
-    assert "limit" in fourth.json()["detail"].lower()
+    assert fourth.json()["detail"] == "Tariff limit reached: max 3 devices for tariff 'Старт'"
 
 
 async def test_duplicate_serial_number_conflict(client, subscribed_admin) -> None:  # type: ignore[no-untyped-def]

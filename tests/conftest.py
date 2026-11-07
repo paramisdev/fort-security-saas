@@ -13,11 +13,21 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest.fixture
-async def db_engine():
-    """Создаёт движок и схему БД на время теста."""
+async def db_engine(request):  # type: ignore[no-untyped-def]
+    """Создаёт движок, схему БД и стандартные тарифы на время теста."""
     engine = create_async_engine(TEST_DATABASE_URL, poolclass=StaticPool)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    if request.node.get_closest_marker("no_tariffs") is None:
+        from app.models import Tariff
+        from scripts.seed import DEFAULT_TARIFFS
+
+        maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        async with maker() as session:
+            session.add_all([Tariff(**data) for data in DEFAULT_TARIFFS])
+            await session.commit()
+
     yield engine
     await engine.dispose()
 
@@ -84,19 +94,6 @@ async def tenant_admin(client):  # type: ignore[no-untyped-def]
     return {"tokens": tokens, "profile": profile}
 
 
-async def seed_tariffs(db_session) -> list:  # type: ignore[no-untyped-def]
-    """Создаёт 4 стандартных тарифа напрямую в БД и коммитит."""
-    from app.models import Tariff
-    from scripts.seed import DEFAULT_TARIFFS
-
-    tariffs = [Tariff(**data) for data in DEFAULT_TARIFFS]
-    db_session.add_all(tariffs)
-    await db_session.commit()
-    for tariff in tariffs:
-        await db_session.refresh(tariff)
-    return tariffs
-
-
 async def subscribe_tenant(admin_tokens: dict, client: AsyncClient, tariff_code: str) -> dict:
     """Оформляет тенанту активную подписку на тариф через заглушку оплаты."""
     response = await client.post(
@@ -130,8 +127,10 @@ async def superadmin(db_session, client):  # type: ignore[no-untyped-def]
 
 
 @pytest.fixture
-async def subscribed_admin(tenant_admin, db_session, client):  # type: ignore[no-untyped-def]
-    """Тенант с активной подпиской на тариф 'start' (1 объект, 3 устройства)."""
-    await seed_tariffs(db_session)
-    subscription = await subscribe_tenant(tenant_admin["tokens"], client, "start")
-    return {**tenant_admin, "subscription": subscription}
+async def subscribed_admin(tenant_admin, client):  # type: ignore[no-untyped-def]
+    """Тенант с автоматической подпиской на тариф 'start' (1 объект, 3 устройства)."""
+    response = await client.get(
+        "/api/v1/subscriptions/current", headers=auth_header(tenant_admin["tokens"])
+    )
+    assert response.status_code == 200, response.text
+    return {**tenant_admin, "subscription": response.json()}

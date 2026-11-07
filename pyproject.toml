@@ -32,3 +32,6 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
+markers = [
+    "no_tariffs: do not seed default tariffs into the test database",
+]

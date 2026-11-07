@@ -35,6 +35,12 @@ async def get_active_tariff(session: AsyncSession, tenant_id: uuid.UUID) -> Tari
     return subscription.tariff
 
 
+def _format_limit_error(limit: int, entity: str, tariff_name: str) -> str:
+    """Формирует сообщение о лимите с правильным склонением."""
+    noun = entity if limit == 1 else f"{entity}s"
+    return f"Tariff limit reached: max {limit} {noun} for tariff '{tariff_name}'"
+
+
 # --- Объекты ---
 
 
@@ -60,9 +66,7 @@ async def create_object(
     tariff = await get_active_tariff(session, tenant_id)
     repo = SecurityObjectRepository(session)
     if await repo.count_by_tenant(tenant_id) >= tariff.max_objects:
-        raise LimitExceededError(
-            f"Tariff limit reached: max {tariff.max_objects} objects " f"for tariff '{tariff.name}'"
-        )
+        raise LimitExceededError(_format_limit_error(tariff.max_objects, "object", tariff.name))
     security_object = SecurityObject(
         tenant_id=tenant_id,
         name=payload.name,
@@ -131,9 +135,7 @@ async def create_device(
         raise ConflictError(f"Device with serial number '{payload.serial_number}' already exists")
 
     if await repo.count_by_tenant(tenant_id) >= tariff.max_devices:
-        raise LimitExceededError(
-            f"Tariff limit reached: max {tariff.max_devices} devices " f"for tariff '{tariff.name}'"
-        )
+        raise LimitExceededError(_format_limit_error(tariff.max_devices, "device", tariff.name))
 
     device = Device(
         tenant_id=tenant_id,

@@ -11,13 +11,13 @@ def _payload(name: str = "Квартира") -> dict:
     return {"name": name, "address": "ул. Ленина, 1", "type": "apartment"}
 
 
-async def test_create_object_without_subscription_forbidden(client, tenant_admin) -> None:  # type: ignore[no-untyped-def]
-    """Без активной подписки создание объекта запрещено (403)."""
+async def test_create_object_with_auto_subscription(client, tenant_admin) -> None:  # type: ignore[no-untyped-def]
+    """После регистрации подписка 'start' уже активна: объект создаётся сразу."""
     response = await client.post(
         OBJECTS_URL, json=_payload(), headers=auth_header(tenant_admin["tokens"])
     )
-    assert response.status_code == 403
-    assert "subscription" in response.json()["detail"].lower()
+    assert response.status_code == 201, response.text
+    assert response.json()["name"] == "Квартира"
 
 
 async def test_create_and_get_object(client, subscribed_admin) -> None:  # type: ignore[no-untyped-def]
@@ -85,7 +85,7 @@ async def test_object_limit_enforced(client, subscribed_admin) -> None:  # type:
         OBJECTS_URL, json=_payload("Второй"), headers=auth_header(subscribed_admin["tokens"])
     )
     assert second.status_code == 403
-    assert "limit" in second.json()["detail"].lower()
+    assert second.json()["detail"] == "Tariff limit reached: max 1 object for tariff 'Старт'"
 
 
 async def test_object_isolated_between_tenants(client, subscribed_admin) -> None:  # type: ignore[no-untyped-def]
