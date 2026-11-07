@@ -66,3 +66,28 @@ def require_roles(*allowed_roles: UserRole) -> Callable[[User], Awaitable[User]]
         return user
 
     return check_role
+
+
+def require_tenant_id(
+    *allowed_roles: UserRole,
+) -> Callable[[User], Awaitable[uuid.UUID]]:
+    """Фабрика зависимости: проверяет роль и возвращает tenant_id текущего пользователя.
+
+    SuperAdmin без тенанта (tenant_id is None) не проходит: эндпоинты
+    tenant-данных требуют контекста компании.
+    """
+
+    async def check_tenant(user: User = Depends(get_current_user)) -> uuid.UUID:
+        if user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+        if user.tenant_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Tenant context required",
+            )
+        return user.tenant_id
+
+    return check_tenant

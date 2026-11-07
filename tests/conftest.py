@@ -82,3 +82,56 @@ async def tenant_admin(client):  # type: ignore[no-untyped-def]
     profile = await register_tenant(client, "acme")
     tokens = await login(client, "admin-acme@example.com")
     return {"tokens": tokens, "profile": profile}
+
+
+async def seed_tariffs(db_session) -> list:  # type: ignore[no-untyped-def]
+    """Создаёт 4 стандартных тарифа напрямую в БД и коммитит."""
+    from app.models import Tariff
+    from scripts.seed import DEFAULT_TARIFFS
+
+    tariffs = [Tariff(**data) for data in DEFAULT_TARIFFS]
+    db_session.add_all(tariffs)
+    await db_session.commit()
+    for tariff in tariffs:
+        await db_session.refresh(tariff)
+    return tariffs
+
+
+async def subscribe_tenant(admin_tokens: dict, client: AsyncClient, tariff_code: str) -> dict:
+    """Оформляет тенанту активную подписку на тариф через заглушку оплаты."""
+    response = await client.post(
+        "/api/v1/subscriptions/change",
+        json={"tariff_code": tariff_code},
+        headers=auth_header(admin_tokens),
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+@pytest.fixture
+async def superadmin(db_session, client):  # type: ignore[no-untyped-def]
+    """SuperAdmin без тенанта, возвращает dict с токенами и профилем."""
+    from app.core import security
+    from app.models import User
+    from app.models.enums import UserRole
+
+    user = User(
+        email="super@example.com",
+        hashed_password=security.hash_password("Str0ngPass!"),
+        full_name="Super Admin",
+        role=UserRole.SUPERADMIN,
+        tenant_id=None,
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    tokens = await login(client, "super@example.com")
+    return {"tokens": tokens, "profile": {"id": str(user.id), "email": user.email}}
+
+
+@pytest.fixture
+async def subscribed_admin(tenant_admin, db_session, client):  # type: ignore[no-untyped-def]
+    """Тенант с активной подпиской на тариф 'start' (1 объект, 3 устройства)."""
+    await seed_tariffs(db_session)
+    subscription = await subscribe_tenant(tenant_admin["tokens"], client, "start")
+    return {**tenant_admin, "subscription": subscription}
